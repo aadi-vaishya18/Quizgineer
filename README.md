@@ -1,6 +1,5 @@
 Quizgineer 🎯
 
-Advanced Styling and JavaScript – Task 3
 
 Quizgineer is an interactive and responsive quiz web application developed as part of Task-3: Advanced Styling and JavaScript under the internship program at ApexPlanet Software Pvt Ltd. The project demonstrates practical usage of modern CSS techniques and JavaScript to build an engaging user experience.
 
