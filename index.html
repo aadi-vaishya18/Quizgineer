@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="style.css">
+        <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+        <title>Quizgineer</title>
+    </head>
+    <body>
+        <!-- Configuration Container -->
+        <div class="config-container">
+            <h2 class="config-title">Quiz Configuration</h2>
+
+            <div class="config-option">
+                <h4 class="option-title">Select Category</h4>
+                <div class="category-options">
+                    <button class="category-option active" active>DSA</button>
+                    <button class="category-option">Apptitude</button>
+                    <button class="category-option">Logical Reasoning</button>
+                    <button class="category-option">Core Engineering</button>
+                </div>
+            </div>
+
+            <div class="config-option">
+                <h4 class="option-title">No. of Questions</h4>
+                <div class="question-options">
+                    <button class="question-option">5</button>
+                    <button class="question-option active">10</button>
+                    <button class="question-option">15</button>
+                    <button class="question-option">20</button>
+                    <button class="question-option">25</button>
+                </div>
+            </div>
+
+            <button class="start-btn">Start Quiz</button>
+        </div>
+
+        <!-- Quiz Container -->
+        <div class="quiz-container">
+            <header class="quiz-header">
+                <h2 class="quiz-title">Quiz Application</h2>
+                <div class="quiz-timer">
+                    <span class="material-symbols-rounded">timer</span>
+                    <p class="time-duration">15s</p>
+                </div>
+            </header>
+            <div class="quiz-content">
+                <h1 class="question-text">
+                    In JavaScript, how you create a function?
+                </h1>
+                <ul class="answer-options">
+                    <li class="answer-option">
+                        <p>create function myFunction()</p>
+                    </li>
+                    <li class="answer-option correct">
+                        <p>function myFunction()</p>
+                        <span class="material-symbols-rounded">check_circle</span>
+                    </li>
+                    <li class="answer-option incorrect">
+                        <p>def function myFunction()</p>
+                        <span class="material-symbols-rounded">cancel</span>
+                    </li>
+                    <li class="answer-option">
+                        <p>func myFunction()</p>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="quiz-footer">
+                <p class="question-status"></p>
+                <button class="next-btn">
+                    Next
+                    <span class="material-symbols-rounded">arrow_forward</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Container -->
+        <div class="result-container">
+            <img src="assets/quiz-over.png" alt="quiz-over" class="result-img">
+            <h2 class="result-title">Quiz Completed!</h2>
+            <p class="result-message"></p>
+            <button class="restart-btn">Restart Quiz</button>
+        </div>
+
+        <script src="Javascript/questions.js"></script>
+        <script src="Javascript/script.js"></script>
+    </body>
+</html>   
