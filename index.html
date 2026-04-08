@@ -9,6 +9,41 @@
         <title>Quizgineer</title>
     </head>
     <body>
+        <div class="session-controls">
+            <p class="session-user"></p>
+            <button class="logout-btn" type="button">Logout</button>
+        </div>
+
+        <div class="auth-container">
+            <h2 class="auth-title">Welcome to Quizgineer</h2>
+            <p class="auth-subtitle">Login or create an account to start your quiz journey.</p>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" type="button" data-mode="login">Login</button>
+                <button class="auth-tab" type="button" data-mode="signup">Signup</button>
+            </div>
+
+            <form class="auth-form" novalidate>
+                <div class="auth-field name-field hidden">
+                    <label for="auth-name">Full Name</label>
+                    <input id="auth-name" type="text" placeholder="Enter your name" autocomplete="name">
+                </div>
+
+                <div class="auth-field">
+                    <label for="auth-email">Email</label>
+                    <input id="auth-email" type="email" placeholder="Enter your email" autocomplete="email" required>
+                </div>
+
+                <div class="auth-field">
+                    <label for="auth-password">Password</label>
+                    <input id="auth-password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
+                </div>
+
+                <button class="auth-submit-btn" type="submit">Login</button>
+            </form>
+
+            <p class="auth-message" aria-live="polite"></p>
+        </div>
         <!-- Configuration Container -->
         <div class="config-container">
             <h2 class="config-title">Quiz Configuration</h2>
@@ -82,9 +117,19 @@
             <img src="assets/quiz-over.png" alt="quiz-over" class="result-img">
             <h2 class="result-title">Quiz Completed!</h2>
             <p class="result-message"></p>
+            <div class="result-history">
+                <h3 class="result-history-title">Previous Attempts</h3>
+                <p class="result-history-status">Loading history...</p>
+                <ul class="result-history-list"></ul>
+            </div>
             <button class="restart-btn">Restart Quiz</button>
         </div>
 
+        <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
+        <script src="Javascript/firebase-config.js"></script>
         <script src="Javascript/questions.js"></script>
         <script src="Javascript/script.js"></script>
     </body>
