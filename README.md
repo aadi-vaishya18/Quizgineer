@@ -1,69 +1,94 @@
-Quizgineer 🎯
+# Quizgineer 🎯
 
+Quizgineer is an interactive and responsive quiz web application enhanced with **Firebase Authentication and Firestore Database**, making it a complete full-stack frontend project with real-time capabilities.
 
-Quizgineer is an interactive and responsive quiz web application developed as part of Task-3: Advanced Styling and JavaScript under the internship program at ApexPlanet Software Pvt Ltd. The project demonstrates practical usage of modern CSS techniques and JavaScript to build an engaging user experience.
+---
 
-📌 Objective
+## 🌐 Live Demo
+https://quizgineer.web.app
 
-Gain advanced skills in CSS and JavaScript
+---
 
-Build an interactive and responsive web application
+## 📌 Objective
 
-Implement quiz logic, timers, and dynamic content rendering
+- Gain advanced skills in CSS and JavaScript  
+- Build an interactive and responsive web application  
+- Implement quiz logic, timers, and dynamic content rendering  
+- Integrate Firebase for authentication and database  
+- Apply responsive design using media queries  
 
-Apply responsive design using media queries
+---
 
-🚀 Features
+## 🚀 Features
 
-Category-based quiz selection (DSA, Aptitude, Logical Reasoning, Core Engineering)
+### 🧠 Quiz Features
+- Category-based quiz selection (DSA, Aptitude, Logical Reasoning, Core Engineering)  
+- Configurable number of questions  
+- Countdown timer for each question  
+- Instant feedback with correct/incorrect answer highlighting  
+- Progress tracking and final result summary  
 
-Configurable number of questions
+### 🔥 New Features (Version 2)
+- Firebase Authentication (Login/Signup)  
+- Firestore Database integration  
+- User-specific data handling  
+- Persistent quiz data storage  
 
-Countdown timer for each question
+### 🎨 UI/UX
+- Fully responsive design (Desktop, Tablet, Mobile)  
+- Clean UI with smooth interactions  
 
-Instant feedback with correct/incorrect answer highlighting
+---
 
-Progress tracking and final result summary
-
-Fully responsive design for desktop, tablet, and mobile devices
-
-Clean UI with smooth interactions
-
-🗂️ Project Structure
+## 🗂️ Project Structure
 Quizgineer/
 │
 ├── assets/
-│   ├── quiz-over.png
-│   └── favicon.ico
+│ ├── quiz-over.png
+│ └── favicon.ico
 │
 ├── Javascript/
-│   ├── questions.js
-│   └── script.js
+│ ├── questions.js
+│ │ └── script.js
 │
+├── firebase-config.js
 ├── index.html
 ├── style.css
+├── firebase.json
 └── README.md
 
-🛠️ Technologies Used
 
-HTML5 – Structure of the application
+---
 
-CSS3 – Styling, layout, and responsiveness
+## 🛠️ Technologies Used
 
-JavaScript (ES6) – Quiz logic, timer, DOM manipulation
+- **HTML5** – Structure of the application  
+- **CSS3** – Styling, layout, and responsiveness  
+- **JavaScript (ES6)** – Quiz logic, timer, DOM manipulation  
+- **Firebase Authentication** – User login/signup  
+- **Firestore Database** – Real-time data storage  
+- **Firebase Hosting** – Deployment and live hosting  
 
-📖 How to Run the Project
+---
 
-Clone the repository or download the source code
+## 📖 How to Run the Project
 
-Open index.html in any modern web browser
+1. Clone the repository or download the source code  
+2. Open `index.html` in any modern web browser  
+3. Select quiz category and number of questions  
+4. Start the quiz and test your knowledge  
 
-Select quiz category and number of questions
+---
 
-Start the quiz and test your knowledge
+## 🚀 Deployment
 
+This project is deployed using Firebase Hosting.
 
-✨ Conclusion
+To deploy manually:
+firebase deploy
 
-Quizgineer showcases the effective use of JavaScript for interactivity and CSS for responsive design. This project strengthens frontend fundamentals and serves as a solid base for future enhancements like API-based questions, score history, or authentication.
+---
 
+## ✨ Conclusion
+
+Quizgineer demonstrates strong frontend fundamentals along with backend integration using Firebase. It showcases real-world features like authentication and database management, making it a portfolio-ready project. Future improvements can include leaderboard systems, analytics dashboards, and API-based dynamic questions.
