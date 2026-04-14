@@ -7,10 +7,8 @@
     "public": ".",
     "ignore": [
       "firebase.json",
-      ".firebaserc",
       "**/.*",
       "**/node_modules/**"
-    ],
-    "cleanUrls": true
+    ]
   }
 }

@@ -6,6 +6,7 @@
         <link rel="stylesheet" href="style.css">
         <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+        <script src="https://cdn.tailwindcss.com"></script>
         <title>Quizgineer</title>
     </head>
     <body>
@@ -29,6 +30,21 @@
                     <input id="auth-name" type="text" placeholder="Enter your name" autocomplete="name">
                 </div>
 
+                <div class="auth-field branch-field hidden">
+                    <label for="auth-branch">Branch</label>
+                    <input id="auth-branch" type="text" placeholder="Enter your branch" autocomplete="organization-title">
+                </div>
+
+                <div class="auth-field roll-field hidden">
+                    <label for="auth-roll">Roll Number</label>
+                    <input id="auth-roll" type="text" placeholder="Enter your roll number" autocomplete="off">
+                </div>
+
+                <div class="auth-field phone-field hidden">
+                    <label for="auth-phone">Phone Number</label>
+                    <input id="auth-phone" type="tel" placeholder="Enter your phone number" autocomplete="tel">
+                </div>
+
                 <div class="auth-field">
                     <label for="auth-email">Email</label>
                     <input id="auth-email" type="email" placeholder="Enter your email" autocomplete="email" required>
@@ -43,6 +59,87 @@
             </form>
 
             <p class="auth-message" aria-live="polite"></p>
+        </div>
+
+        <div class="dashboard-container bg-slate-50 rounded-2xl shadow-xl p-6">
+            <header class="dashboard-navbar border-b border-blue-100 pb-4">
+                <h2 class="dashboard-app-name">Quizgineer ERP Dashboard</h2>
+                <p class="dashboard-profile text-slate-700 font-semibold"></p>
+            </header>
+
+            <section class="performance-grid grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <article class="perf-card bg-white border border-blue-100 rounded-xl shadow-sm p-4">
+                    <p class="perf-label text-slate-500 text-sm">Total Quizzes Attempted</p>
+                    <h3 class="perf-value text-blue-900 text-2xl font-bold mt-2" id="total-attempts">0</h3>
+                </article>
+                <article class="perf-card bg-white border border-blue-100 rounded-xl shadow-sm p-4">
+                    <p class="perf-label text-slate-500 text-sm">Average Score</p>
+                    <h3 class="perf-value text-blue-900 text-2xl font-bold mt-2" id="average-score">0%</h3>
+                </article>
+                <article class="perf-card bg-white border border-blue-100 rounded-xl shadow-sm p-4">
+                    <p class="perf-label text-slate-500 text-sm">Highest Score</p>
+                    <h3 class="perf-value text-blue-900 text-2xl font-bold mt-2" id="highest-score">0%</h3>
+                </article>
+                <article class="perf-card bg-white border border-blue-100 rounded-xl shadow-sm p-4">
+                    <p class="perf-label text-slate-500 text-sm">Last Attempt Score</p>
+                    <h3 class="perf-value text-blue-900 text-2xl font-bold mt-2" id="last-score">0%</h3>
+                </article>
+            </section>
+
+            <section class="charts-grid grid gap-4 lg:grid-cols-2 mt-5">
+                <article class="chart-card bg-white border border-blue-100 rounded-xl shadow-sm p-4">
+                    <h3>Sub-topic Performance</h3>
+                    <canvas id="subTopicChart"></canvas>
+                </article>
+                <article class="chart-card bg-white border border-blue-100 rounded-xl shadow-sm p-4">
+                    <h3>Quiz History</h3>
+                    <canvas id="quizHistoryChart"></canvas>
+                </article>
+                <article class="chart-card bg-white border border-blue-100 rounded-xl shadow-sm p-4">
+                    <h3>Difficulty Analysis</h3>
+                    <canvas id="difficultyChart"></canvas>
+                </article>
+            </section>
+
+            <section class="recent-activity-card bg-white border border-blue-100 rounded-xl shadow-sm p-4 mt-4">
+                <h3>Recent Activity</h3>
+                <p class="recent-activity-status">Loading last 5 attempts...</p>
+                <ul class="recent-activity-list"></ul>
+            </section>
+
+            <section class="quiz-entry-card bg-white border border-blue-100 rounded-xl shadow-sm p-4 mt-4">
+                <h3>Start New Quiz</h3>
+                <div class="quiz-entry-grid grid gap-3 md:grid-cols-3">
+                    <div class="quiz-entry-field">
+                        <label for="dashboard-topic">Topic</label>
+                        <select id="dashboard-topic">
+                            <option value="DSA">DSA</option>
+                            <option value="Aptitude">Aptitude</option>
+                            <option value="Logical Reasoning">Logical Reasoning</option>
+                            <option value="Core Engineering">Core Engineering</option>
+                        </select>
+                    </div>
+                    <div class="quiz-entry-field">
+                        <label for="dashboard-difficulty">Difficulty</label>
+                        <select id="dashboard-difficulty">
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+                    <div class="quiz-entry-field">
+                        <label for="dashboard-question-count">Number of Questions</label>
+                        <select id="dashboard-question-count">
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="75">75</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="dashboard-start-quiz-btn mt-3 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-600 text-white font-semibold" type="button">Start Quiz</button>
+            </section>
+
         </div>
         <!-- Configuration Container -->
         <div class="config-container">
@@ -117,20 +214,27 @@
             <img src="assets/quiz-over.png" alt="quiz-over" class="result-img">
             <h2 class="result-title">Quiz Completed!</h2>
             <p class="result-message"></p>
-            <div class="result-history">
-                <h3 class="result-history-title">Previous Attempts</h3>
-                <p class="result-history-status">Loading history...</p>
-                <ul class="result-history-list"></ul>
+            <div class="result-breakdown">
+                <h3 class="result-breakdown-title">Breakdown</h3>
+                <ul class="result-breakdown-list"></ul>
             </div>
-            <button class="restart-btn">Restart Quiz</button>
+            <div class="result-subtopic">
+                <h3 class="result-subtopic-title">Sub-topic Performance</h3>
+                <ul class="result-subtopic-list"></ul>
+            </div>
+            <button class="restart-btn">Go to Dashboard</button>
         </div>
 
         <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
         <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
         <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
         <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script src="Javascript/firebase-config.js"></script>
         <script src="Javascript/questions.js"></script>
+        <script>
+            window.GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxgLcMwfdsH92EzLtAZpbnxVWGhwleCJzEcgMOhdxHWk3E8jlPugekDcZGka8d1entCsg/exec";
+        </script>
         <script src="Javascript/script.js"></script>
     </body>
 </html>   

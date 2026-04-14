@@ -9,12 +9,19 @@ const authTabs = document.querySelectorAll(".auth-tab");
 const authForm = document.querySelector(".auth-form");
 const authNameField = document.querySelector(".name-field");
 const authNameInput = document.querySelector("#auth-name");
+const authBranchField = document.querySelector(".branch-field");
+const authBranchInput = document.querySelector("#auth-branch");
+const authRollField = document.querySelector(".roll-field");
+const authRollInput = document.querySelector("#auth-roll");
+const authPhoneField = document.querySelector(".phone-field");
+const authPhoneInput = document.querySelector("#auth-phone");
 const authEmailInput = document.querySelector("#auth-email");
 const authPasswordInput = document.querySelector("#auth-password");
 const authSubmitButton = document.querySelector(".auth-submit-btn");
 const authMessage = document.querySelector(".auth-message");
 
 const auth = window.firebaseServices?.auth || null;
+const db = window.firebaseServices?.db || null;
 let authMode = "login";
 window.currentUser = null;
 
@@ -66,6 +73,9 @@ const setAuthMode = mode => {
     });
 
     authNameField.classList.toggle("hidden", mode !== "signup");
+    authBranchField.classList.toggle("hidden", mode !== "signup");
+    authRollField.classList.toggle("hidden", mode !== "signup");
+    authPhoneField.classList.toggle("hidden", mode !== "signup");
     authPasswordInput.setAttribute(
         "autocomplete",
         mode === "signup" ? "new-password" : "current-password"
@@ -74,13 +84,29 @@ const setAuthMode = mode => {
     setAuthMessage("");
 };
 
-const validateCredentials = ({ name, email, password }) => {
+const validateCredentials = ({ name, email, branch, rollNumber, phoneNumber, password }) => {
     const trimmedName = name.trim();
     const trimmedEmail = email.trim();
+    const trimmedBranch = branch.trim();
+    const trimmedRollNumber = rollNumber.trim();
+    const trimmedPhoneNumber = phoneNumber.trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^[0-9]{10}$/;
 
     if (authMode === "signup" && trimmedName.length < 2) {
         return { valid: false, message: "Enter a valid full name (minimum 2 characters)." };
+    }
+
+    if (authMode === "signup" && trimmedBranch.length < 2) {
+        return { valid: false, message: "Enter a valid branch." };
+    }
+
+    if (authMode === "signup" && trimmedRollNumber.length < 2) {
+        return { valid: false, message: "Enter a valid roll number." };
+    }
+
+    if (authMode === "signup" && !phoneRegex.test(trimmedPhoneNumber)) {
+        return { valid: false, message: "Enter a valid 10-digit phone number." };
     }
 
     if (!emailRegex.test(trimmedEmail)) {
@@ -96,6 +122,9 @@ const validateCredentials = ({ name, email, password }) => {
         data: {
             name: trimmedName,
             email: trimmedEmail,
+            branch: trimmedBranch,
+            rollNumber: trimmedRollNumber,
+            phoneNumber: trimmedPhoneNumber,
             password
         }
     };
@@ -120,11 +149,27 @@ const getFirebaseErrorMessage = errorCode => {
     }
 };
 
-const handleSignup = async ({ name, email, password }) => {
+const handleSignup = async ({ name, email, branch, rollNumber, phoneNumber, password }) => {
     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    const { user } = userCredential;
 
     if (name) {
-        await userCredential.user.updateProfile({ displayName: name });
+        await user.updateProfile({ displayName: name });
+    }
+
+    if (db && user?.uid) {
+        await db.collection("users").doc(user.uid).set(
+            {
+                userId: user.uid,
+                name,
+                email,
+                branch,
+                rollNumber,
+                phoneNumber,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            },
+            { merge: true }
+        );
     }
 };
 
@@ -142,6 +187,9 @@ const handleAuthSubmit = async event => {
 
     const validationResult = validateCredentials({
         name: authNameInput.value,
+        branch: authBranchInput.value,
+        rollNumber: authRollInput.value,
+        phoneNumber: authPhoneInput.value,
         email: authEmailInput.value,
         password: authPasswordInput.value
     });
