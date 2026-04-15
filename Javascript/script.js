@@ -39,863 +39,817 @@ let latestQuizResult = null;
 let isResultPersisted = false;
 
 const topicKeyAliases = {
-    dsa: "DSA",
-    aptitude: "Aptitude",
-    apptitude: "Aptitude",
-    logicalreasoning: "Logical Reasoning",
-    coreengineering: "Core Engineering"
+  dsa: "DSA",
+  aptitude: "Aptitude",
+  apptitude: "Aptitude",
+  logicalreasoning: "Logical Reasoning",
+  coreengineering: "Core Engineering"
 };
 
 const normalizeTopicKey = value => (value || "").toLowerCase().replace(/[^a-z]/g, "");
 
 const resolveTopicCategory = value => {
-    const normalized = normalizeTopicKey(value);
-    return topicKeyAliases[normalized] || value;
+  const normalized = normalizeTopicKey(value);
+  return topicKeyAliases[normalized] || value;
 };
 
 const destroyChartIfAny = chartInstance => {
-    if (chartInstance) {
-        chartInstance.destroy();
-    }
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
 };
 
 const renderSubTopicPerformanceChart = results => {
-    const canvas = document.querySelector("#subTopicChart");
-    if (!canvas || typeof Chart === "undefined") return;
+  const canvas = document.querySelector("#subTopicChart");
+  if (!canvas || typeof Chart === "undefined") return;
 
-    const topicMap = {};
-    results.forEach(result => {
-        const topic = result.topic || "Unknown";
-        topicMap[topic] = topicMap[topic] || { totalScore: 0, count: 0 };
-        topicMap[topic].totalScore += Number(result.score) || 0;
-        topicMap[topic].count += 1;
-    });
+  const topicMap = {};
+  results.forEach(result => {
+    const topic = result.topic || "Unknown";
+    topicMap[topic] = topicMap[topic] || { totalScore: 0, count: 0 };
+    topicMap[topic].totalScore += Number(result.score) || 0;
+    topicMap[topic].count += 1;
+  });
 
-    const labels = Object.keys(topicMap);
-    const values = labels.map(topic => Math.round(topicMap[topic].totalScore / topicMap[topic].count));
+  const labels = Object.keys(topicMap);
+  const values = labels.map(topic => Math.round(topicMap[topic].totalScore / topicMap[topic].count));
 
-    destroyChartIfAny(subTopicChartInstance);
-    subTopicChartInstance = new Chart(canvas, {
-        type: "bar",
-        data: {
-            labels: labels.length ? labels : ["No Data"],
-            datasets: [
-                {
-                    label: "Average Score",
-                    data: values.length ? values : [0],
-                    backgroundColor: "#60a5fa",
-                    borderRadius: 6
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, max: 100 } }
+  destroyChartIfAny(subTopicChartInstance);
+  subTopicChartInstance = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: labels.length ? labels : ["No Data"],
+      datasets: [
+        {
+          label: "Average Score",
+          data: values.length ? values : [0],
+          backgroundColor: "#60a5fa",
+          borderRadius: 6
         }
-    });
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, max: 100 } }
+    }
+  });
 };
 
 const renderQuizHistoryChart = results => {
-    const canvas = document.querySelector("#quizHistoryChart");
-    if (!canvas || typeof Chart === "undefined") return;
+  const canvas = document.querySelector("#quizHistoryChart");
+  if (!canvas || typeof Chart === "undefined") return;
 
-    const ordered = [...results].reverse();
-    const labels = ordered.map((_, index) => `Attempt ${index + 1}`);
-    const data = ordered.map(result => Number(result.score) || 0);
+  const ordered = [...results].reverse();
+  const labels = ordered.map((_, index) => `Attempt ${index + 1}`);
+  const data = ordered.map(result => Number(result.score) || 0);
 
-    destroyChartIfAny(quizHistoryChartInstance);
-    quizHistoryChartInstance = new Chart(canvas, {
-        type: "line",
-        data: {
-            labels: labels.length ? labels : ["Attempt 1"],
-            datasets: [
-                {
-                    label: "Score",
-                    data: data.length ? data : [0],
-                    borderColor: "#2563eb",
-                    backgroundColor: "rgba(37, 99, 235, 0.15)",
-                    fill: true,
-                    tension: 0.35
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            scales: { y: { beginAtZero: true, max: 100 } }
+  destroyChartIfAny(quizHistoryChartInstance);
+  quizHistoryChartInstance = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels: labels.length ? labels : ["Attempt 1"],
+      datasets: [
+        {
+          label: "Score",
+          data: data.length ? data : [0],
+          borderColor: "#2563eb",
+          backgroundColor: "rgba(37, 99, 235, 0.15)",
+          fill: true,
+          tension: 0.35
         }
-    });
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true, max: 100 } }
+    }
+  });
 };
 
 const renderDifficultyAnalysisChart = results => {
-    const canvas = document.querySelector("#difficultyChart");
-    if (!canvas || typeof Chart === "undefined") return;
+  const canvas = document.querySelector("#difficultyChart");
+  if (!canvas || typeof Chart === "undefined") return;
 
-    const difficultyMap = { Easy: 0, Medium: 0, Hard: 0, "Not Set": 0 };
-    results.forEach(result => {
-        const difficulty = result.difficulty || "Not Set";
-        if (typeof difficultyMap[difficulty] !== "number") {
-            difficultyMap["Not Set"] += 1;
-            return;
+  const difficultyMap = { Easy: 0, Medium: 0, Hard: 0, "Not Set": 0 };
+  results.forEach(result => {
+    const difficulty = result.difficulty || "Not Set";
+    if (typeof difficultyMap[difficulty] !== "number") {
+      difficultyMap["Not Set"] += 1;
+      return;
+    }
+    difficultyMap[difficulty] += 1;
+  });
+
+  const labels = Object.keys(difficultyMap);
+  const data = labels.map(label => difficultyMap[label]);
+
+  destroyChartIfAny(difficultyChartInstance);
+  difficultyChartInstance = new Chart(canvas, {
+    type: "pie",
+    data: {
+      labels,
+      datasets: [
+        {
+          data,
+          backgroundColor: ["#93c5fd", "#60a5fa", "#2563eb", "#cbd5e1"]
         }
-        difficultyMap[difficulty] += 1;
-    });
-
-    const labels = Object.keys(difficultyMap);
-    const data = labels.map(label => difficultyMap[label]);
-
-    destroyChartIfAny(difficultyChartInstance);
-    difficultyChartInstance = new Chart(canvas, {
-        type: "pie",
-        data: {
-            labels,
-            datasets: [
-                {
-                    data,
-                    backgroundColor: ["#93c5fd", "#60a5fa", "#2563eb", "#cbd5e1"]
-                }
-            ]
-        },
-        options: { responsive: true }
-    });
+      ]
+    },
+    options: { responsive: true }
+  });
 };
 
 const updatePerformanceCards = results => {
-    const total = results.length;
-    const scores = results.map(result => Number(result.score) || 0);
-    const average = total ? Math.round(scores.reduce((sum, score) => sum + score, 0) / total) : 0;
-    const highest = total ? Math.max(...scores) : 0;
-    const lastScore = total ? scores[0] : 0;
+  const total = results.length;
+  const scores = results.map(result => Number(result.score) || 0);
+  const average = total ? Math.round(scores.reduce((sum, score) => sum + score, 0) / total) : 0;
+  const highest = total ? Math.max(...scores) : 0;
+  const lastScore = total ? scores[0] : 0;
 
-    totalAttemptsEl.textContent = String(total);
-    averageScoreEl.textContent = `${average}%`;
-    highestScoreEl.textContent = `${highest}%`;
-    lastScoreEl.textContent = `${lastScore}%`;
+  totalAttemptsEl.textContent = String(total);
+  averageScoreEl.textContent = `${average}%`;
+  highestScoreEl.textContent = `${highest}%`;
+  lastScoreEl.textContent = `${lastScore}%`;
 };
 
 const formatTimestamp = timestampValue => {
-    if (!timestampValue) return "Date unavailable";
-    if (typeof timestampValue.toDate === "function") {
-        return timestampValue.toDate().toLocaleString();
-    }
+  if (!timestampValue) return "Date unavailable";
+  if (typeof timestampValue.toDate === "function") {
+    return timestampValue.toDate().toLocaleString();
+  }
 
-    const parsedDate = new Date(timestampValue);
-    if (Number.isNaN(parsedDate.getTime())) return "Date unavailable";
-    return parsedDate.toLocaleString();
+  const parsedDate = new Date(timestampValue);
+  if (Number.isNaN(parsedDate.getTime())) return "Date unavailable";
+  return parsedDate.toLocaleString();
 };
 
 const getTimestampMillis = timestampValue => {
-    if (!timestampValue) return 0;
-    if (typeof timestampValue.toDate === "function") {
-        return timestampValue.toDate().getTime();
-    }
+  if (!timestampValue) return 0;
+  if (typeof timestampValue.toDate === "function") {
+    return timestampValue.toDate().getTime();
+  }
 
-    const parsedDate = new Date(timestampValue);
-    return Number.isNaN(parsedDate.getTime()) ? 0 : parsedDate.getTime();
+  const parsedDate = new Date(timestampValue);
+  return Number.isNaN(parsedDate.getTime()) ? 0 : parsedDate.getTime();
 };
 
 const renderRecentActivity = results => {
-    if (!recentActivityList || !recentActivityStatus) return;
-    recentActivityList.innerHTML = "";
+  if (!recentActivityList || !recentActivityStatus) return;
+  recentActivityList.innerHTML = "";
 
-    const latestFive = results.slice(0, 5);
-    if (!latestFive.length) {
-        recentActivityStatus.textContent = "No quiz attempts found yet.";
-        return;
-    }
+  const latestFive = results.slice(0, 5);
+  if (!latestFive.length) {
+    recentActivityStatus.textContent = "No quiz attempts found yet.";
+    return;
+  }
 
-    recentActivityStatus.textContent = "";
+  recentActivityStatus.textContent = "";
 
-    latestFive.forEach(result => {
-        const item = document.createElement("li");
-        item.className = "recent-activity-item";
+  latestFive.forEach(result => {
+    const item = document.createElement("li");
+    item.className = "recent-activity-item";
 
-        const topic = result.topic || "Unknown Topic";
-        const difficulty = result.difficulty || "Not Set";
-        const formattedDate = formatTimestamp(result.timestamp || result.submittedAt);
-        const score = Number(result.score) || 0;
+    const topic = result.topic || "Unknown Topic";
+    const difficulty = result.difficulty || "Not Set";
+    const formattedDate = formatTimestamp(result.timestamp || result.submittedAt);
+    const score = Number(result.score) || 0;
 
-        item.innerHTML = `
-            <div class="recent-activity-meta">
-                <span><strong>Topic:</strong> ${topic}</span>
-                <span><strong>Difficulty:</strong> ${difficulty}</span>
-                <span><strong>Date:</strong> ${formattedDate}</span>
-            </div>
-            <p class="recent-activity-score">${score}%</p>
-        `;
-        recentActivityList.appendChild(item);
-    });
+    item.innerHTML = `
+      <div class="recent-activity-meta">
+        <span><b>Topic:</b> ${topic}</span>
+        <span><b>Difficulty:</b> ${difficulty}</span>
+        <span><b>Date:</b> ${formattedDate}</span>
+      </div>
+      <span class="recent-activity-score">${score}%</span>
+    `;
+    recentActivityList.appendChild(item);
+  });
 };
 
 const getClientTimestamp = () => new Date().toISOString();
 
 const sendResultToGoogleSheets = async ({ resultObject, profileData = {} }) => {
-    if (!GOOGLE_SHEETS_WEBHOOK_URL || !resultObject) {
-        console.warn("Google Sheets webhook skipped: URL or result object missing.");
-        return;
+  if (!GOOGLE_SHEETS_WEBHOOK_URL) {
+    console.warn("[Google Sheets] Webhook URL is not configured. Skipping sync.");
+    return;
+  }
+
+  if (!resultObject) {
+    console.warn("[Google Sheets] Result object is missing. Skipping sync.");
+    return;
+  }
+
+  const payload = {
+    name: profileData.name || window.currentUser?.displayName || "",
+    email: profileData.email || window.currentUser?.email || "",
+    rollNumber: profileData.rollNumber || "",
+    branch: profileData.branch || "",
+    score: resultObject.score ?? 0,
+    difficulty: resultObject.difficulty || "Not Set",
+    timestamp: getClientTimestamp()
+  };
+
+  console.info("[Google Sheets] Sending payload:", JSON.stringify(payload, null, 2));
+  console.info("[Google Sheets] Webhook URL:", GOOGLE_SHEETS_WEBHOOK_URL);
+
+  try {
+    const response = await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const responseText = await response.text().catch(() => "Unable to read response body");
+      console.error(`[Google Sheets] Webhook responded with status ${response.status}:`, responseText);
+      throw new Error(`Webhook responded with status ${response.status}: ${responseText}`);
     }
 
-    const payload = {
-        name: profileData.name || window.currentUser?.displayName || "",
-        email: profileData.email || window.currentUser?.email || "",
-        rollNumber: profileData.rollNumber || "",
-        branch: profileData.branch || "",
-        score: resultObject.score ?? 0,
-        difficulty: resultObject.difficulty || "Not Set",
-        timestamp: getClientTimestamp()
-    };
+    console.info("[Google Sheets] ✅ Sync successful.", {
+      score: payload.score,
+      difficulty: payload.difficulty,
+      email: payload.email
+    });
+  } catch (error) {
+    console.warn("[Google Sheets] CORS/network error on first attempt, retrying with no-cors:", error.message);
 
     try {
-        const response = await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
+      await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
 
-        if (!response.ok) {
-            throw new Error(`Webhook responded with status ${response.status}`);
-        }
-
-        console.info("Google Sheets sync successful.", {
-            score: payload.score,
-            difficulty: payload.difficulty,
-            email: payload.email
-        });
-    } catch (error) {
-        console.warn("Google Sheets CORS request failed, retrying with no-cors mode.", error);
-
-        try {
-            // Apps Script web apps often fail CORS preflight; this fallback still sends the payload.
-            await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(payload)
-            });
-
-            console.info("Google Sheets sync request sent in no-cors mode.", {
-                score: payload.score,
-                difficulty: payload.difficulty,
-                email: payload.email
-            });
-        } catch (fallbackError) {
-            console.error("Google Sheets sync failed in both modes.", {
-                error: fallbackError,
-                webhook: GOOGLE_SHEETS_WEBHOOK_URL,
-                payloadPreview: payload
-            });
-        }
+      console.info("[Google Sheets] ✅ Request sent in no-cors mode (response opaque).", {
+        score: payload.score,
+        difficulty: payload.difficulty,
+        email: payload.email
+      });
+    } catch (fallbackError) {
+      console.error("[Google Sheets] ❌ Sync FAILED in both modes.", {
+        error: fallbackError.message,
+        stack: fallbackError.stack,
+        webhook: GOOGLE_SHEETS_WEBHOOK_URL,
+        payload: payload
+      });
     }
+  }
 };
 
 const loadDashboardData = async () => {
-    if (!db || !window.currentUser) {
-        updatePerformanceCards([]);
-        renderSubTopicPerformanceChart([]);
-        renderQuizHistoryChart([]);
-        renderDifficultyAnalysisChart([]);
-        renderRecentActivity([]);
-        return;
-    }
+  if (!db || !window.currentUser) {
+    console.warn("[Dashboard] No db or currentUser, showing empty dashboard.");
+    updatePerformanceCards([]);
+    renderSubTopicPerformanceChart([]);
+    renderQuizHistoryChart([]);
+    renderDifficultyAnalysisChart([]);
+    renderRecentActivity([]);
+    return;
+  }
+
+  try {
+    console.info("[Dashboard] Loading data for user:", window.currentUser.uid);
+    let results = [];
 
     try {
-        let results = [];
+      const indexedSnapshot = await db
+        .collection("results")
+        .where("userId", "==", window.currentUser.uid)
+        .orderBy("timestamp", "desc")
+        .limit(20)
+        .get();
+      results = indexedSnapshot.docs.map(doc => doc.data());
+      console.info("[Dashboard] Fetched", results.length, "results via indexed query.");
+    } catch (indexedQueryError) {
+      console.warn("[Dashboard] Indexed query failed, using fallback:", indexedQueryError.message);
+      const fallbackSnapshot = await db
+        .collection("results")
+        .where("userId", "==", window.currentUser.uid)
+        .limit(50)
+        .get();
 
-        try {
-            const indexedSnapshot = await db
-                .collection("results")
-                .where("userId", "==", window.currentUser.uid)
-                .orderBy("timestamp", "desc")
-                .limit(20)
-                .get();
-            results = indexedSnapshot.docs.map(doc => doc.data());
-        } catch (indexedQueryError) {
-            console.warn("Indexed dashboard query failed, using fallback query:", indexedQueryError);
-            const fallbackSnapshot = await db
-                .collection("results")
-                .where("userId", "==", window.currentUser.uid)
-                .limit(50)
-                .get();
-
-            results = fallbackSnapshot.docs
-                .map(doc => doc.data())
-                .sort(
-                    (a, b) =>
-                        getTimestampMillis(b.timestamp || b.submittedAt) -
-                        getTimestampMillis(a.timestamp || a.submittedAt)
-                )
-                .slice(0, 20);
-        }
-
-        updatePerformanceCards(results);
-        renderSubTopicPerformanceChart(results);
-        renderQuizHistoryChart(results);
-        renderDifficultyAnalysisChart(results);
-        renderRecentActivity(results);
-    } catch (error) {
-        console.error("Unable to load dashboard analytics:", error);
-        updatePerformanceCards([]);
-        renderSubTopicPerformanceChart([]);
-        renderQuizHistoryChart([]);
-        renderDifficultyAnalysisChart([]);
-        renderRecentActivity([]);
+      results = fallbackSnapshot.docs
+        .map(doc => doc.data())
+        .sort(
+          (a, b) =>
+            getTimestampMillis(b.timestamp || b.submittedAt) -
+            getTimestampMillis(a.timestamp || a.submittedAt)
+        )
+        .slice(0, 20);
+      console.info("[Dashboard] Fetched", results.length, "results via fallback query.");
     }
+
+    updatePerformanceCards(results);
+    renderSubTopicPerformanceChart(results);
+    renderQuizHistoryChart(results);
+    renderDifficultyAnalysisChart(results);
+    renderRecentActivity(results);
+    console.info("[Dashboard] ✅ Dashboard rendered successfully.");
+  } catch (error) {
+    console.error("[Dashboard] ❌ Unable to load dashboard analytics:", error);
+    updatePerformanceCards([]);
+    renderSubTopicPerformanceChart([]);
+    renderQuizHistoryChart([]);
+    renderDifficultyAnalysisChart([]);
+    renderRecentActivity([]);
+  }
 };
 
 window.showDashboard = async () => {
-    dashboardContainer.style.display = "block";
-    configContainer.style.display = "none";
-    quizContainer.style.display = "none";
-    resultContainer.style.display = "none";
+  dashboardContainer.style.display = "block";
+  if (configContainer) configContainer.style.display = "none";
+  quizContainer.style.display = "none";
+  resultContainer.style.display = "none";
+  if (dashboardProfile) {
     dashboardProfile.textContent = window.currentUser?.displayName || window.currentUser?.email || "User";
-    await loadDashboardData();
+  }
+  await loadDashboardData();
 };
 
 let resetTimer = () => {
-    clearInterval(timer);
-    currentTime = QUIZ_TIME_LIMIT;
-    timerDisplay.textContent = `${currentTime}s`;
+  clearInterval(timer);
+  currentTime = QUIZ_TIME_LIMIT;
+  timerDisplay.textContent = `${currentTime}s`;
 };
 
 let clearQuizProgress = () => {
-    resetTimer();
-    currentQuestion = null;
-    currentQuestionSetIndex = -1;
-    questionsIndexHistory = [];
-    correctAnswersCount = 0;
-    quizAttemptAnswers = [];
-    latestQuizResult = null;
-    isResultPersisted = false;
-    questionStatus.textContent = "";
-    answerOptions.innerHTML = "";
-    nextQuestionBtn.style.visibility = "hidden";
+  resetTimer();
+  currentQuestion = null;
+  currentQuestionSetIndex = -1;
+  questionsIndexHistory = [];
+  correctAnswersCount = 0;
+  quizAttemptAnswers = [];
+  latestQuizResult = null;
+  isResultPersisted = false;
+  questionStatus.textContent = "";
+  answerOptions.innerHTML = "";
+  nextQuestionBtn.style.visibility = "hidden";
 };
+
 let generateResultFeedback = scorePercentage => {
-    if (scorePercentage >= 85) return "Excellent performance! You have a strong command of this topic.";
-    if (scorePercentage >= 65) return "Good job! A little more practice can make this score even better.";
-    if (scorePercentage >= 40) return "Decent attempt. Review concepts and retry to improve your accuracy.";
-    return "Keep practicing. Focus on basics and attempt again for a better score.";
+  if (scorePercentage >= 85) return "Excellent performance! You have a strong command of this topic.";
+  if (scorePercentage >= 65) return "Good job! A little more practice can make this score even better.";
+  if (scorePercentage >= 40) return "Decent attempt. Review concepts and retry to improve your accuracy.";
+  return "Keep practicing. Focus on basics and attempt again for a better score.";
 };
 
 let buildQuizResultObject = () => {
-    let totalQuestions = numberOfQuestions || 0;
-    let correctAnswers = correctAnswersCount;
-    let wrongAnswers = quizAttemptAnswers.filter(answer => !answer.isCorrect && !answer.timedOut).length;
-    let unanswered = quizAttemptAnswers.filter(answer => answer.timedOut).length;
-    let scorePercentage = totalQuestions ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
-    const subTopicPerformance = quizAttemptAnswers.reduce((accumulator, answer) => {
-        const subTopicKey = answer.subTopic || "General";
-        if (!accumulator[subTopicKey]) {
-            accumulator[subTopicKey] = { correct: 0, total: 0 };
-        }
+  let totalQuestions = numberOfQuestions || 0;
+  let correctAnswers = correctAnswersCount;
+  let wrongAnswers = quizAttemptAnswers.filter(answer => !answer.isCorrect && !answer.timedOut).length;
+  let unanswered = quizAttemptAnswers.filter(answer => answer.timedOut).length;
+  let scorePercentage = totalQuestions ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+  const subTopicPerformance = quizAttemptAnswers.reduce((accumulator, answer) => {
+    const subTopicKey = answer.subTopic || "General";
+    if (!accumulator[subTopicKey]) {
+      accumulator[subTopicKey] = { correct: 0, total: 0 };
+    }
 
-        accumulator[subTopicKey].total += 1;
-        if (answer.isCorrect) {
-            accumulator[subTopicKey].correct += 1;
-        }
-        return accumulator;
-    }, {});
+    accumulator[subTopicKey].total += 1;
+    if (answer.isCorrect) {
+      accumulator[subTopicKey].correct += 1;
+    }
+    return accumulator;
+  }, {});
 
-    return {
-        userId: window.currentUser?.uid || null,
-        topic: quizCategory,
-        difficulty: selectedDifficulty || "Not Set",
-        score: scorePercentage,
-        correctAnswers,
-        wrongAnswers,
-        unanswered,
-        totalQuestions,
-        answers: [...quizAttemptAnswers],
-        subTopicPerformance,
-        feedback: generateResultFeedback(scorePercentage),
-        submittedAt: new Date().toISOString()
-    };
+  return {
+    userId: window.currentUser?.uid || null,
+    topic: quizCategory,
+    difficulty: selectedDifficulty || "Not Set",
+    score: scorePercentage,
+    correctAnswers,
+    wrongAnswers,
+    unanswered,
+    totalQuestions,
+    answers: [...quizAttemptAnswers],
+    subTopicPerformance,
+    feedback: generateResultFeedback(scorePercentage),
+    submittedAt: new Date().toISOString()
+  };
 };
 
 let persistQuizResult = async resultObject => {
-    if (!db || !window.currentUser || isResultPersisted || !resultObject) return null;
+  if (!db || !window.currentUser || isResultPersisted || !resultObject) return null;
 
-    const firestore = firebase.firestore;
-    let profileData = {};
+  const firestore = firebase.firestore;
+  let profileData = {};
 
-    try {
-        const userProfileDoc = await db.collection("users").doc(window.currentUser.uid).get();
-        profileData = userProfileDoc.exists ? userProfileDoc.data() || {} : {};
-    } catch (error) {
-        console.error("Unable to load user profile for result payload:", error);
-    }
+  try {
+    const userProfileDoc = await db.collection("users").doc(window.currentUser.uid).get();
+    profileData = userProfileDoc.exists ? userProfileDoc.data() || {} : {};
+  } catch (error) {
+    console.error("[Persist] Unable to load user profile for result payload:", error);
+  }
 
-    const resultPayload = {
-        userId: resultObject.userId,
-        name: profileData.name || window.currentUser.displayName || "",
-        branch: profileData.branch || "",
-        rollNumber: profileData.rollNumber || "",
-        difficulty: resultObject.difficulty || "Not Set",
-        topic: resultObject.topic,
-        score: resultObject.score,
-        correctAnswers: resultObject.correctAnswers,
-        wrongAnswers: resultObject.wrongAnswers,
-        unanswered: resultObject.unanswered,
-        totalQuestions: resultObject.totalQuestions,
-        answers: resultObject.answers,
-        subTopicPerformance: resultObject.subTopicPerformance || {},
-        timestamp: firestore.FieldValue.serverTimestamp()
-    };
+  const resultPayload = {
+    userId: resultObject.userId,
+    name: profileData.name || window.currentUser.displayName || "",
+    branch: profileData.branch || "",
+    rollNumber: profileData.rollNumber || "",
+    difficulty: resultObject.difficulty || "Not Set",
+    topic: resultObject.topic,
+    score: resultObject.score,
+    correctAnswers: resultObject.correctAnswers,
+    wrongAnswers: resultObject.wrongAnswers,
+    unanswered: resultObject.unanswered,
+    totalQuestions: resultObject.totalQuestions,
+    answers: resultObject.answers,
+    subTopicPerformance: resultObject.subTopicPerformance || {},
+    timestamp: firestore.FieldValue.serverTimestamp()
+  };
 
-    const resultDocRef = await db.collection("results").add(resultPayload);
+  const resultDocRef = await db.collection("results").add(resultPayload);
 
-    const historyEntry = {
-        resultId: resultDocRef.id,
-        topic: resultObject.topic,
-        score: resultObject.score,
-        correctAnswers: resultObject.correctAnswers,
-        totalQuestions: resultObject.totalQuestions,
-        timestamp: firestore.FieldValue.serverTimestamp()
-    };
+  const historyEntry = {
+    resultId: resultDocRef.id,
+    topic: resultObject.topic,
+    score: resultObject.score,
+    correctAnswers: resultObject.correctAnswers,
+    totalQuestions: resultObject.totalQuestions,
+    timestamp: firestore.FieldValue.serverTimestamp()
+  };
 
-    await db.collection("users").doc(window.currentUser.uid).set(
-        {
-            name: window.currentUser.displayName || "",
-            email: window.currentUser.email || "",
-            quizHistory: firestore.FieldValue.arrayUnion(historyEntry),
-            updatedAt: firestore.FieldValue.serverTimestamp()
-        },
-        { merge: true }
-    );
+  await db.collection("users").doc(window.currentUser.uid).set(
+    {
+      name: window.currentUser.displayName || "",
+      email: window.currentUser.email || "",
+      quizHistory: firestore.FieldValue.arrayUnion(historyEntry),
+      updatedAt: firestore.FieldValue.serverTimestamp()
+    },
+    { merge: true }
+  );
 
+  try {
     await sendResultToGoogleSheets({ resultObject, profileData });
+  } catch (sheetError) {
+    console.error("[Google Sheets] Error during sync after quiz persist:", sheetError);
+  }
 
-    isResultPersisted = true;
-    return resultDocRef.id;
+  isResultPersisted = true;
+  return resultDocRef.id;
 };
 
 let showQuizResult = async () => {
-    quizContainer.style.display = "none";
-    resultContainer.style.display = "block";
-    if (!latestQuizResult) {
-        latestQuizResult = buildQuizResultObject();
-    }
+  quizContainer.style.display = "none";
+  resultContainer.style.display = "block";
+  if (!latestQuizResult) {
+    latestQuizResult = buildQuizResultObject();
+  }
 
-    let resultText = `Score: <b>${latestQuizResult.score}%</b><br>
-Correct: <b>${latestQuizResult.correctAnswers}</b> | Wrong: <b>${latestQuizResult.wrongAnswers}</b> | Unanswered: <b>${latestQuizResult.unanswered}</b><br>
+  let resultText = `Score: <b>${latestQuizResult.score}%</b><br><br>
+Correct: <b>${latestQuizResult.correctAnswers}</b> | Wrong: <b>${latestQuizResult.wrongAnswers}</b> | Unanswered: <b>${latestQuizResult.unanswered}</b><br><br>
 ${latestQuizResult.feedback}`;
 
-    document.querySelector(".result-message").innerHTML = resultText;
-    const breakdownList = document.querySelector(".result-breakdown-list");
-    const subTopicList = document.querySelector(".result-subtopic-list");
+  document.querySelector(".result-message").innerHTML = resultText;
+  const breakdownList = document.querySelector(".result-breakdown-list");
+  const subTopicList = document.querySelector(".result-subtopic-list");
 
-    if (breakdownList) {
-        breakdownList.innerHTML = `
-            <li><strong>Topic:</strong> ${latestQuizResult.topic || "General"}</li>
-            <li><strong>Difficulty:</strong> ${latestQuizResult.difficulty || "Not Set"}</li>
-            <li><strong>Total Questions:</strong> ${latestQuizResult.totalQuestions}</li>
-            <li><strong>Correct:</strong> ${latestQuizResult.correctAnswers}</li>
-            <li><strong>Wrong:</strong> ${latestQuizResult.wrongAnswers}</li>
-            <li><strong>Unanswered:</strong> ${latestQuizResult.unanswered}</li>
-        `;
+  if (breakdownList) {
+    breakdownList.innerHTML = `
+      <li><b>Topic:</b> ${latestQuizResult.topic || "General"}</li>
+      <li><b>Difficulty:</b> ${latestQuizResult.difficulty || "Not Set"}</li>
+      <li><b>Total Questions:</b> ${latestQuizResult.totalQuestions}</li>
+      <li><b>Correct:</b> ${latestQuizResult.correctAnswers}</li>
+      <li><b>Wrong:</b> ${latestQuizResult.wrongAnswers}</li>
+      <li><b>Unanswered:</b> ${latestQuizResult.unanswered}</li>
+    `;
+  }
+
+  if (subTopicList) {
+    const performance = latestQuizResult.subTopicPerformance || {};
+    const entries = Object.entries(performance);
+
+    if (!entries.length) {
+      subTopicList.innerHTML = "<li>No sub-topic data available.</li>";
+    } else {
+      subTopicList.innerHTML = entries
+        .map(
+          ([subTopic, stats]) =>
+            `<li><b>${subTopic}:</b> ${stats.correct}/${stats.total} correct</li>`
+        )
+        .join("");
     }
+  }
 
-    if (subTopicList) {
-        const performance = latestQuizResult.subTopicPerformance || {};
-        const entries = Object.entries(performance);
-
-        if (!entries.length) {
-            subTopicList.innerHTML = "<li>No sub-topic data available.</li>";
-        } else {
-            subTopicList.innerHTML = entries
-                .map(
-                    ([subTopic, stats]) =>
-                        `<li><strong>${subTopic}:</strong> ${stats.correct}/${stats.total} correct</li>`
-                )
-                .join("");
-        }
+  try {
+    const resultId = await persistQuizResult(latestQuizResult);
+    if (resultId) {
+      window.latestResultId = resultId;
     }
-
-    try {
-        const resultId = await persistQuizResult(latestQuizResult);
-        if (resultId) {
-            window.latestResultId = resultId;
-        }
-    } catch (error) {
-        console.error("Unable to store quiz result:", error);
-    }
+  } catch (error) {
+    console.error("[Result] Unable to store quiz result:", error);
+  }
 };
 
 let startTimer = () => {
-    timer = setInterval(() => {
-        currentTime--;
-        timerDisplay.textContent = `${currentTime}s`;
+  timer = setInterval(() => {
+    currentTime--;
+    timerDisplay.textContent = `${currentTime}s`;
 
-        if (currentTime <= 0) {
-            handleQuestionTimeout();
-        }
-    }, 1000);
+    if (currentTime <= 0) {
+      handleQuestionTimeout();
+    }
+  }, 1000);
 };
 
 let getRandomQuestions = () => {
-    if (!quizCategory || !Array.isArray(activeQuestionSet) || !activeQuestionSet.length) return null;
+  if (!quizCategory || !Array.isArray(activeQuestionSet) || !activeQuestionSet.length) return null;
 
-    if (questionsIndexHistory.length >= Math.min(activeQuestionSet.length, numberOfQuestions)) {
-        showQuizResult();
-        return null;
-    }
+  if (questionsIndexHistory.length >= Math.min(activeQuestionSet.length, numberOfQuestions)) {
+    showQuizResult();
+    return null;
+  }
 
-    let availableIndexes = activeQuestionSet
-        .map((_, index) => index)
-        .filter(index => !questionsIndexHistory.includes(index));
+  let availableIndexes = activeQuestionSet
+    .map((_, index) => index)
+    .filter(index => !questionsIndexHistory.includes(index));
 
-    if (!availableIndexes.length) {
-        showQuizResult();
-        return null;
-    }
+  if (!availableIndexes.length) {
+    showQuizResult();
+    return null;
+  }
 
-    let randomIndex = availableIndexes[Math.floor(Math.random() * availableIndexes.length)];
-    questionsIndexHistory.push(randomIndex);
-    currentQuestionSetIndex = randomIndex;
-    return activeQuestionSet[randomIndex];
+  let randomIndex = availableIndexes[Math.floor(Math.random() * availableIndexes.length)];
+  questionsIndexHistory.push(randomIndex);
+  currentQuestionSetIndex = randomIndex;
+  return activeQuestionSet[randomIndex];
 };
 
 const getLocalTopicQuestions = topic => {
-    const resolvedTopic = resolveTopicCategory(topic);
-    const categoryObj = questions.find(
-        category => normalizeTopicKey(category.category) === normalizeTopicKey(resolvedTopic)
-    );
+  const resolvedTopic = resolveTopicCategory(topic);
+  const categoryObj = questions.find(
+    category => normalizeTopicKey(category.category) === normalizeTopicKey(resolvedTopic)
+  );
 
-    if (!categoryObj || !Array.isArray(categoryObj.questions)) return [];
-    return categoryObj.questions
-        .map(question => sanitizeFetchedQuestion(question, resolvedTopic, selectedDifficulty))
-        .filter(Boolean);
+  if (!categoryObj || !Array.isArray(categoryObj.questions)) return [];
+  return categoryObj.questions
+    .map(question => sanitizeFetchedQuestion(question, resolvedTopic, selectedDifficulty))
+    .filter(Boolean);
 };
 
 const sanitizeFetchedQuestion = (question, fallbackTopic = quizCategory, fallbackDifficulty = selectedDifficulty) => {
-    if (!question || typeof question.question !== "string") return null;
-    if (!Array.isArray(question.options) || question.options.length < 2) return null;
+  if (!question || typeof question.question !== "string") return null;
+  if (!Array.isArray(question.options) || question.options.length < 2) return null;
 
-    const correctAnswer = Number(question.correctAnswer);
-    if (Number.isNaN(correctAnswer) || correctAnswer < 0 || correctAnswer >= question.options.length) {
-        return null;
-    }
+  const correctAnswer = Number(question.correctAnswer);
+  if (Number.isNaN(correctAnswer) || correctAnswer < 0 || correctAnswer >= question.options.length) {
+    return null;
+  }
 
-    return {
-        question: question.question,
-        options: question.options,
-        correctAnswer,
-        topic: question.topic || fallbackTopic || "General",
-        subTopic: question.subTopic || question.topic || fallbackTopic || "General",
-        difficulty: question.difficulty || fallbackDifficulty || "Not Set"
-    };
+  return {
+    question: question.question,
+    options: question.options,
+    correctAnswer,
+    topic: question.topic || fallbackTopic || "General",
+    subTopic: question.subTopic || question.topic || fallbackTopic || "General",
+    difficulty: question.difficulty || fallbackDifficulty || "Not Set"
+  };
 };
 
 const fetchTopicQuestions = async topic => {
-    const fallbackQuestions = getLocalTopicQuestions(topic);
+  const fallbackQuestions = getLocalTopicQuestions(topic);
 
-    if (!db) {
-        return fallbackQuestions;
+  if (!db) {
+    return fallbackQuestions;
+  }
+
+  try {
+    const topicDoc = await db.collection("quizTopics").doc(resolveTopicCategory(topic)).get();
+    if (!topicDoc.exists) {
+      return fallbackQuestions;
     }
 
-    try {
-        const topicDoc = await db.collection("quizTopics").doc(resolveTopicCategory(topic)).get();
-        if (!topicDoc.exists) {
-            return fallbackQuestions;
-        }
+    const topicData = topicDoc.data() || {};
+    const firestoreQuestions = Array.isArray(topicData.questions) ? topicData.questions : [];
+    const sanitizedQuestions = firestoreQuestions
+      .map(question => sanitizeFetchedQuestion(question, resolveTopicCategory(topic), selectedDifficulty))
+      .filter(Boolean);
 
-        const topicData = topicDoc.data() || {};
-        const firestoreQuestions = Array.isArray(topicData.questions) ? topicData.questions : [];
-        const sanitizedQuestions = firestoreQuestions
-            .map(question => sanitizeFetchedQuestion(question, resolveTopicCategory(topic), selectedDifficulty))
-            .filter(Boolean);
-
-        return sanitizedQuestions.length ? sanitizedQuestions : fallbackQuestions;
-    } catch (error) {
-        console.error("Unable to fetch topic questions from Firestore:", error);
-        return fallbackQuestions;
-    }
+    return sanitizedQuestions.length ? sanitizedQuestions : fallbackQuestions;
+  } catch (error) {
+    console.error("[Quiz] Unable to fetch topic questions from Firestore:", error);
+    return fallbackQuestions;
+  }
 };
 
 let highlightCorrectAnswer = () => {
-    let correctOption = answerOptions.querySelectorAll(".answer-option")[currentQuestion.correctAnswer];
+  let correctOption = answerOptions.querySelectorAll(".answer-option")[currentQuestion.correctAnswer];
 
-    if (!correctOption) return;
+  if (!correctOption) return;
 
-    correctOption.classList.add("correct");
-    correctOption.insertAdjacentHTML(
-        "beforeend",
-        `<span class="material-symbols-rounded">check_circle</span>`
-    );
+  correctOption.classList.add("correct");
+  correctOption.insertAdjacentHTML(
+    "beforeend",
+    `<span class="material-symbols-rounded">check_circle</span>`
+  );
 };
 
 let trackUserAnswer = ({ selectedAnswerIndex = null, isCorrect = false, timedOut = false }) => {
-    if (!currentQuestion || currentQuestionSetIndex < 0) return;
+  if (!currentQuestion || currentQuestionSetIndex < 0) return;
 
-    let answerRecord = {
-        questionIndex: questionsIndexHistory.length,
-        questionSetIndex: currentQuestionSetIndex,
-        topic: currentQuestion.topic || quizCategory,
-        subTopic: currentQuestion.subTopic || currentQuestion.topic || quizCategory || "General",
-        difficulty: currentQuestion.difficulty || selectedDifficulty || "Not Set",
-        question: currentQuestion.question,
-        options: [...currentQuestion.options],
-        selectedAnswerIndex,
-        selectedAnswer:
-            selectedAnswerIndex === null ? null : currentQuestion.options[selectedAnswerIndex] || null,
-        correctAnswerIndex: currentQuestion.correctAnswer,
-        correctAnswer: currentQuestion.options[currentQuestion.correctAnswer],
-        isCorrect,
-        timedOut
-    };
+  let answerRecord = {
+    questionIndex: questionsIndexHistory.length,
+    questionSetIndex: currentQuestionSetIndex,
+    topic: currentQuestion.topic || quizCategory,
+    subTopic: currentQuestion.subTopic || currentQuestion.topic || quizCategory || "General",
+    difficulty: currentQuestion.difficulty || selectedDifficulty || "Not Set",
+    question: currentQuestion.question,
+    options: [...currentQuestion.options],
+    selectedAnswerIndex,
+    selectedAnswer:
+      selectedAnswerIndex === null ? null : currentQuestion.options[selectedAnswerIndex] || null,
+    correctAnswerIndex: currentQuestion.correctAnswer,
+    correctAnswer: currentQuestion.options[currentQuestion.correctAnswer],
+    isCorrect,
+    timedOut
+  };
 
-    let existingRecordIndex = quizAttemptAnswers.findIndex(
-        record => record.questionSetIndex === currentQuestionSetIndex
-    );
+  let existingRecordIndex = quizAttemptAnswers.findIndex(
+    record => record.questionSetIndex === currentQuestionSetIndex
+  );
 
-    if (existingRecordIndex >= 0) {
-        quizAttemptAnswers[existingRecordIndex] = answerRecord;
-    } else {
-        quizAttemptAnswers.push(answerRecord);
-    }
+  if (existingRecordIndex >= 0) {
+    quizAttemptAnswers[existingRecordIndex] = answerRecord;
+  } else {
+    quizAttemptAnswers.push(answerRecord);
+  }
 };
 
 let handleQuestionTimeout = () => {
-    clearInterval(timer);
+  clearInterval(timer);
 
-    if (!currentQuestion) return;
+  if (!currentQuestion) return;
 
-    let alreadyRecorded = quizAttemptAnswers.some(
-        record => record.questionSetIndex === currentQuestionSetIndex
-    );
+  let alreadyRecorded = quizAttemptAnswers.some(
+    record => record.questionSetIndex === currentQuestionSetIndex
+  );
 
-    if (!alreadyRecorded) {
-        trackUserAnswer({
-            selectedAnswerIndex: null,
-            isCorrect: false,
-            timedOut: true
-        });
-    }
-
-    highlightCorrectAnswer();
-    nextQuestionBtn.style.visibility = "visible";
-    quizContainer.querySelector(".quiz-timer").style.background = "#c31402";
-
-    answerOptions.querySelectorAll(".answer-option").forEach(option => {
-        option.style.pointerEvents = "none";
+  if (!alreadyRecorded) {
+    trackUserAnswer({
+      selectedAnswerIndex: null,
+      isCorrect: false,
+      timedOut: true
     });
+  }
+
+  highlightCorrectAnswer();
+  nextQuestionBtn.style.visibility = "visible";
+  quizContainer.querySelector(".quiz-timer").style.background = "#c31402";
+
+  answerOptions.querySelectorAll(".answer-option").forEach(option => {
+    option.style.pointerEvents = "none";
+  });
 };
 
 let handleAnswer = (option, answerIndex) => {
-    if (!currentQuestion) return;
-    clearInterval(timer);
+  if (!currentQuestion) return;
+  clearInterval(timer);
 
-    let isCorrect = currentQuestion.correctAnswer === answerIndex;
-    option.classList.add(isCorrect ? "correct" : "incorrect");
+  let isCorrect = currentQuestion.correctAnswer === answerIndex;
+  option.classList.add(isCorrect ? "correct" : "incorrect");
 
-    if (!isCorrect) {
-        highlightCorrectAnswer();
-    } else {
-        correctAnswersCount++;
-    }
+  if (!isCorrect) {
+    highlightCorrectAnswer();
+  } else {
+    correctAnswersCount++;
+  }
 
-    trackUserAnswer({
-        selectedAnswerIndex: answerIndex,
-        isCorrect,
-        timedOut: false
-    });
+  trackUserAnswer({
+    selectedAnswerIndex: answerIndex,
+    isCorrect,
+    timedOut: false
+  });
 
-    option.insertAdjacentHTML(
-        "beforeend",
-        `<span class="material-symbols-rounded">${isCorrect ? "check_circle" : "cancel"}</span>`
-    );
+  option.insertAdjacentHTML(
+    "beforeend",
+    `<span class="material-symbols-rounded">${isCorrect ? "check_circle" : "cancel"}</span>`
+  );
 
-    answerOptions.querySelectorAll(".answer-option").forEach(answerOption => {
-        answerOption.style.pointerEvents = "none";
-    });
+  answerOptions.querySelectorAll(".answer-option").forEach(answerOption => {
+    answerOption.style.pointerEvents = "none";
+  });
 
-    nextQuestionBtn.style.visibility = "visible";
+  nextQuestionBtn.style.visibility = "visible";
 };
 
 let renderQuestion = () => {
-    currentQuestion = getRandomQuestions();
-    if (!currentQuestion) return;
+  currentQuestion = getRandomQuestions();
+  if (!currentQuestion) return;
 
-    resetTimer();
-    startTimer();
+  resetTimer();
+  startTimer();
 
-    answerOptions.innerHTML = "";
-    nextQuestionBtn.style.visibility = "hidden";
-    quizContainer.querySelector(".quiz-timer").style.background = "#32313c";
-    document.querySelector(".question-text").textContent = currentQuestion.question;
+  answerOptions.innerHTML = "";
+  nextQuestionBtn.style.visibility = "hidden";
+  quizContainer.querySelector(".quiz-timer").style.background = "#1e293b";
+  document.querySelector(".question-text").textContent = currentQuestion.question;
 
-    questionStatus.innerHTML = `<b>${questionsIndexHistory.length}</b> of <b>${numberOfQuestions}</b> Questions`;
+  questionStatus.innerHTML = `<b>${questionsIndexHistory.length}</b> of <b>${numberOfQuestions}</b> Questions`;
 
-    currentQuestion.options.forEach((option, index) => {
-        let listItem = document.createElement("li");
-        listItem.classList.add("answer-option");
-        listItem.textContent = option;
-        answerOptions.appendChild(listItem);
-        listItem.addEventListener("click", () => handleAnswer(listItem, index));
-    });
+  currentQuestion.options.forEach((option, index) => {
+    let listItem = document.createElement("li");
+    listItem.classList.add("answer-option");
+    listItem.textContent = option;
+    answerOptions.appendChild(listItem);
+    listItem.addEventListener("click", () => handleAnswer(listItem, index));
+  });
 };
 
 window.getCurrentQuizAttemptSnapshot = () => ({
-    topic: quizCategory,
-    totalQuestions: numberOfQuestions,
-    correctAnswers: correctAnswersCount,
-    answers: [...quizAttemptAnswers],
-    latestResult: latestQuizResult
+  topic: quizCategory,
+  totalQuestions: numberOfQuestions,
+  correctAnswers: correctAnswersCount,
+  answers: [...quizAttemptAnswers],
+  latestResult: latestQuizResult
 });
 
-let startQuiz = async () => {
-    if (!window.currentUser) {
-        if (typeof window.setAuthMessage === "function") {
-            window.setAuthMessage("Please login before starting the quiz.", "error");
-        }
-        if (typeof window.showAuthScreen === "function") {
-            window.showAuthScreen();
-        }
-        return;
+let startQuizFromDashboard = async () => {
+  if (!window.currentUser) {
+    if (typeof window.showAuthScreen === "function") {
+      window.showAuthScreen("Please login before starting the quiz.");
     }
+    return;
+  }
 
-    const selectedCategoryButton = configContainer.querySelector(".category-option.active");
-    quizCategory = resolveTopicCategory(selectedCategoryButton?.dataset.topic || selectedCategoryButton?.textContent);
-    selectedTopicKey = normalizeTopicKey(quizCategory);
-    selectedDifficulty = "Not Set";
+  const selectedTopic = resolveTopicCategory(dashboardTopicSelect?.value || "");
+  const selectedCount = Number(dashboardQuestionCountSelect?.value || 0);
+  const chosenDifficulty = dashboardDifficultySelect?.value || "Not Set";
 
-    numberOfQuestions = parseInt(
-        configContainer.querySelector(".question-option.active")?.textContent
-    );
-    if (!selectedTopicKey || !quizCategory) {
-        if (typeof window.setAuthMessage === "function") {
-            window.setAuthMessage("Please select a valid topic before starting.", "error");
-        }
-        return;
-    }
-
-    if (!Number.isInteger(numberOfQuestions) || numberOfQuestions <= 0) {
-        if (typeof window.setAuthMessage === "function") {
-            window.setAuthMessage("Please select a valid number of questions.", "error");
-        }
-        return;
-    }
-
+  if (!selectedTopic || !selectedCount) {
     if (typeof window.setAuthMessage === "function") {
-        window.setAuthMessage("Loading questions...", "success");
+      window.setAuthMessage("Please choose topic and question count.", "error");
     }
+    return;
+  }
 
-    activeQuestionSet = await fetchTopicQuestions(quizCategory);
-    if (!activeQuestionSet.length) {
-        if (typeof window.setAuthMessage === "function") {
-            window.setAuthMessage("No questions available for this topic right now.", "error");
-        }
-        return;
-    }
+  quizCategory = selectedTopic;
+  selectedTopicKey = normalizeTopicKey(quizCategory);
+  numberOfQuestions = selectedCount;
+  selectedDifficulty = chosenDifficulty;
 
-    configContainer.style.display = "none";
-    quizContainer.style.display = "block";
+  if (typeof window.setAuthMessage === "function") {
+    window.setAuthMessage("Loading questions...", "success");
+  }
 
-    correctAnswersCount = 0;
-    questionsIndexHistory = [];
-    quizAttemptAnswers = [];
-    latestQuizResult = null;
-    isResultPersisted = false;
-    window.latestResultId = null;
-    numberOfQuestions = Math.min(numberOfQuestions, activeQuestionSet.length);
+  activeQuestionSet = await fetchTopicQuestions(quizCategory);
 
+  if (!activeQuestionSet.length) {
     if (typeof window.setAuthMessage === "function") {
-        window.setAuthMessage("");
+      window.setAuthMessage("No questions available for this topic right now.", "error");
     }
+    return;
+  }
 
-    renderQuestion();
+  dashboardContainer.style.display = "none";
+  if (configContainer) configContainer.style.display = "none";
+  quizContainer.style.display = "block";
+
+  correctAnswersCount = 0;
+  questionsIndexHistory = [];
+  quizAttemptAnswers = [];
+  latestQuizResult = null;
+  isResultPersisted = false;
+  window.latestResultId = null;
+  numberOfQuestions = Math.min(numberOfQuestions, activeQuestionSet.length);
+
+  if (typeof window.setAuthMessage === "function") {
+    window.setAuthMessage("");
+  }
+
+  renderQuestion();
 };
 
-const startQuizFromDashboard = async () => {
-    if (!window.currentUser) {
-        showAuthScreen("Please login before starting the quiz.");
-        return;
-    }
+let resetQuiz = async () => {
+  clearQuizProgress();
+  quizContainer.style.display = "none";
+  resultContainer.style.display = "none";
+  activeQuestionSet = [];
+  selectedTopicKey = "";
 
-    const selectedTopic = resolveTopicCategory(dashboardTopicSelect?.value || "");
-    const selectedCount = Number(dashboardQuestionCountSelect?.value || 0);
-    const chosenDifficulty = dashboardDifficultySelect?.value || "Not Set";
-
-    if (!selectedTopic || !selectedCount) {
-        setAuthMessage("Please choose topic and question count.", "error");
-        return;
-    }
-
-    quizCategory = selectedTopic;
-    selectedTopicKey = normalizeTopicKey(quizCategory);
-    numberOfQuestions = selectedCount;
-    selectedDifficulty = chosenDifficulty;
-
-    setAuthMessage("Loading questions...", "success");
-    activeQuestionSet = await fetchTopicQuestions(quizCategory);
-
-    if (!activeQuestionSet.length) {
-        setAuthMessage("No questions available for this topic right now.", "error");
-        return;
-    }
-
-    dashboardContainer.style.display = "none";
-    configContainer.style.display = "none";
-    quizContainer.style.display = "block";
-
-    correctAnswersCount = 0;
-    questionsIndexHistory = [];
-    quizAttemptAnswers = [];
-    latestQuizResult = null;
-    isResultPersisted = false;
-    window.latestResultId = null;
-    numberOfQuestions = Math.min(numberOfQuestions, activeQuestionSet.length);
-    setAuthMessage("");
-
-    renderQuestion();
-};
-
-let resetQuiz = () => {
-    clearQuizProgress();
-    quizContainer.style.display = "none";
-    resultContainer.style.display = "none";
-    activeQuestionSet = [];
-    selectedTopicKey = "";
-
-    if (window.currentUser) {
-        window.showDashboard();
-    }
+  if (window.currentUser) {
+    await window.showDashboard();
+  }
 };
 
 window.resetQuizToInitialState = () => {
-    clearQuizProgress();
-    dashboardContainer.style.display = "none";
-    configContainer.style.display = "none";
-    quizContainer.style.display = "none";
-    resultContainer.style.display = "none";
-    activeQuestionSet = [];
-    selectedTopicKey = "";
+  clearQuizProgress();
+  dashboardContainer.style.display = "none";
+  if (configContainer) configContainer.style.display = "none";
+  quizContainer.style.display = "none";
+  resultContainer.style.display = "none";
+  activeQuestionSet = [];
+  selectedTopicKey = "";
 };
-
-window.showQuizConfiguration = () => {
-    dashboardContainer.style.display = "none";
-    configContainer.style.display = "block";
-    quizContainer.style.display = "none";
-    resultContainer.style.display = "none";
-};
-document.querySelectorAll(".category-option").forEach(option => {
-    option.dataset.topic = resolveTopicCategory(option.textContent.trim());
-});
-
-document.querySelectorAll(".category-option, .question-option").forEach(option => {
-    option.addEventListener("click", () => {
-        let activeOption = option.parentNode.querySelector(".active");
-        if (activeOption) {
-            activeOption.classList.remove("active");
-        }
-        option.classList.add("active");
-    });
-});
 
 nextQuestionBtn.addEventListener("click", renderQuestion);
 document.querySelector(".restart-btn").addEventListener("click", resetQuiz);
-document.querySelector(".start-btn").addEventListener("click", startQuiz);
 dashboardStartQuizBtn.addEventListener("click", startQuizFromDashboard);
+
+/* ===================== */
+/* AUTH (integrated)     */
+/* ===================== */
 
 const authContainer = document.querySelector(".auth-container");
 const sessionControls = document.querySelector(".session-controls");
@@ -922,269 +876,270 @@ let authMode = "login";
 window.currentUser = null;
 
 const setAuthMessage = (message = "", type = "error") => {
-    authMessage.textContent = message;
-    authMessage.classList.remove("error", "success");
+  authMessage.textContent = message;
+  authMessage.classList.remove("error", "success");
 
-    if (message) {
-        authMessage.classList.add(type);
-    }
+  if (message) {
+    authMessage.classList.add(type);
+  }
 };
 
 window.setAuthMessage = setAuthMessage;
 
 const showAuthScreen = (message = "") => {
-    authContainer.style.display = "block";
-    dashboardContainer.style.display = "none";
-    configContainer.style.display = "none";
-    quizContainer.style.display = "none";
-    resultContainer.style.display = "none";
-    sessionControls.style.display = "none";
-    sessionUser.textContent = "";
+  authContainer.style.display = "block";
+  dashboardContainer.style.display = "none";
+  if (configContainer) configContainer.style.display = "none";
+  quizContainer.style.display = "none";
+  resultContainer.style.display = "none";
+  sessionControls.style.display = "none";
+  sessionUser.textContent = "";
 
-    if (message) {
-        setAuthMessage(message, "error");
-    }
+  if (message) {
+    setAuthMessage(message, "error");
+  }
 };
 
 window.showAuthScreen = showAuthScreen;
 
 const showLoggedInState = user => {
-    authContainer.style.display = "none";
-    sessionControls.style.display = "flex";
-    sessionUser.textContent = user.displayName || user.email || "Logged in user";
+  authContainer.style.display = "none";
+  sessionControls.style.display = "flex";
+  sessionUser.textContent = user.displayName || user.email || "Logged in user";
 
-    if (typeof window.showDashboard === "function") {
-        window.showDashboard();
-    } else {
-        dashboardContainer.style.display = "none";
-        configContainer.style.display = "block";
-        quizContainer.style.display = "none";
-        resultContainer.style.display = "none";
-    }
+  // Always go to dashboard after login
+  if (typeof window.showDashboard === "function") {
+    window.showDashboard();
+  } else {
+    dashboardContainer.style.display = "block";
+    if (configContainer) configContainer.style.display = "none";
+    quizContainer.style.display = "none";
+    resultContainer.style.display = "none";
+  }
 };
 
 const setAuthMode = mode => {
-    authMode = mode;
+  authMode = mode;
 
-    authTabs.forEach(tab => {
-        tab.classList.toggle("active", tab.dataset.mode === mode);
-    });
+  authTabs.forEach(tab => {
+    tab.classList.toggle("active", tab.dataset.mode === mode);
+  });
 
-    authNameField.classList.toggle("hidden", mode !== "signup");
-    authBranchField.classList.toggle("hidden", mode !== "signup");
-    authRollField.classList.toggle("hidden", mode !== "signup");
-    authPhoneField.classList.toggle("hidden", mode !== "signup");
-    authPasswordInput.setAttribute(
-        "autocomplete",
-        mode === "signup" ? "new-password" : "current-password"
-    );
-    authSubmitButton.textContent = mode === "signup" ? "Create Account" : "Login";
-    setAuthMessage("");
+  authNameField.classList.toggle("hidden", mode !== "signup");
+  authBranchField.classList.toggle("hidden", mode !== "signup");
+  authRollField.classList.toggle("hidden", mode !== "signup");
+  authPhoneField.classList.toggle("hidden", mode !== "signup");
+  authPasswordInput.setAttribute(
+    "autocomplete",
+    mode === "signup" ? "new-password" : "current-password"
+  );
+  authSubmitButton.textContent = mode === "signup" ? "Create Account" : "Login";
+  setAuthMessage("");
 };
 
 const validateCredentials = ({ name, email, branch, rollNumber, phoneNumber, password }) => {
-    const trimmedName = name.trim();
-    const trimmedEmail = email.trim();
-    const trimmedBranch = branch.trim();
-    const trimmedRollNumber = rollNumber.trim();
-    const trimmedPhoneNumber = phoneNumber.trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^[0-9]{10}$/;
+  const trimmedName = name.trim();
+  const trimmedEmail = email.trim();
+  const trimmedBranch = branch.trim();
+  const trimmedRollNumber = rollNumber.trim();
+  const trimmedPhoneNumber = phoneNumber.trim();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const phoneRegex = /^[0-9]{10}$/;
 
-    if (authMode === "signup" && trimmedName.length < 2) {
-        return { valid: false, message: "Enter a valid full name (minimum 2 characters)." };
+  if (authMode === "signup" && trimmedName.length < 2) {
+    return { valid: false, message: "Enter a valid full name (minimum 2 characters)." };
+  }
+
+  if (authMode === "signup" && trimmedBranch.length < 2) {
+    return { valid: false, message: "Enter a valid branch." };
+  }
+
+  if (authMode === "signup" && trimmedRollNumber.length < 2) {
+    return { valid: false, message: "Enter a valid roll number." };
+  }
+
+  if (authMode === "signup" && !phoneRegex.test(trimmedPhoneNumber)) {
+    return { valid: false, message: "Enter a valid 10-digit phone number." };
+  }
+
+  if (!emailRegex.test(trimmedEmail)) {
+    return { valid: false, message: "Enter a valid email address." };
+  }
+
+  if (password.length < 6) {
+    return { valid: false, message: "Password must be at least 6 characters long." };
+  }
+
+  return {
+    valid: true,
+    data: {
+      name: trimmedName,
+      email: trimmedEmail,
+      branch: trimmedBranch,
+      rollNumber: trimmedRollNumber,
+      phoneNumber: trimmedPhoneNumber,
+      password
     }
-
-    if (authMode === "signup" && trimmedBranch.length < 2) {
-        return { valid: false, message: "Enter a valid branch." };
-    }
-
-    if (authMode === "signup" && trimmedRollNumber.length < 2) {
-        return { valid: false, message: "Enter a valid roll number." };
-    }
-
-    if (authMode === "signup" && !phoneRegex.test(trimmedPhoneNumber)) {
-        return { valid: false, message: "Enter a valid 10-digit phone number." };
-    }
-
-    if (!emailRegex.test(trimmedEmail)) {
-        return { valid: false, message: "Enter a valid email address." };
-    }
-
-    if (password.length < 6) {
-        return { valid: false, message: "Password must be at least 6 characters long." };
-    }
-
-    return {
-        valid: true,
-        data: {
-            name: trimmedName,
-            email: trimmedEmail,
-            branch: trimmedBranch,
-            rollNumber: trimmedRollNumber,
-            phoneNumber: trimmedPhoneNumber,
-            password
-        }
-    };
+  };
 };
 
 const getFirebaseErrorMessage = errorCode => {
-    switch (errorCode) {
-        case "auth/email-already-in-use":
-            return "This email is already registered. Please login instead.";
-        case "auth/invalid-email":
-            return "Invalid email format.";
-        case "auth/weak-password":
-            return "Password is too weak. Use at least 6 characters.";
-        case "auth/invalid-credential":
-        case "auth/wrong-password":
-        case "auth/user-not-found":
-            return "Invalid email or password.";
-        case "auth/too-many-requests":
-            return "Too many attempts. Please wait and try again.";
-        default:
-            return "Authentication failed. Please try again.";
-    }
+  switch (errorCode) {
+    case "auth/email-already-in-use":
+      return "This email is already registered. Please login instead.";
+    case "auth/invalid-email":
+      return "Invalid email format.";
+    case "auth/weak-password":
+      return "Password is too weak. Use at least 6 characters.";
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+      return "Invalid email or password.";
+    case "auth/too-many-requests":
+      return "Too many attempts. Please wait and try again.";
+    default:
+      return "Authentication failed. Please try again.";
+  }
 };
 
 const createOrUpdateUserProfile = async (user, profileOverrides = {}) => {
-    if (!db || !user) return;
+  if (!db || !user) return;
 
-    const userRef = db.collection("users").doc(user.uid);
-    const userSnapshot = await userRef.get();
+  const userRef = db.collection("users").doc(user.uid);
+  const userSnapshot = await userRef.get();
 
-    const profileData = {
-        name: user.displayName || "",
-        email: user.email || "",
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
+  const profileData = {
+    name: user.displayName || "",
+    email: user.email || "",
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
 
-    if (profileOverrides.branch) {
-        profileData.branch = profileOverrides.branch;
-    }
-    if (profileOverrides.rollNumber) {
-        profileData.rollNumber = profileOverrides.rollNumber;
-    }
-    if (profileOverrides.phoneNumber) {
-        profileData.phoneNumber = profileOverrides.phoneNumber;
-    }
+  if (profileOverrides.branch) {
+    profileData.branch = profileOverrides.branch;
+  }
+  if (profileOverrides.rollNumber) {
+    profileData.rollNumber = profileOverrides.rollNumber;
+  }
+  if (profileOverrides.phoneNumber) {
+    profileData.phoneNumber = profileOverrides.phoneNumber;
+  }
 
-    if (!userSnapshot.exists) {
-        profileData.quizHistory = [];
-        profileData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-    }
+  if (!userSnapshot.exists) {
+    profileData.quizHistory = [];
+    profileData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+  }
 
-    await userRef.set(profileData, { merge: true });
+  await userRef.set(profileData, { merge: true });
 };
 
 const handleSignup = async ({ name, email, branch, rollNumber, phoneNumber, password }) => {
-    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+  const userCredential = await auth.createUserWithEmailAndPassword(email, password);
 
-    if (name) {
-        await userCredential.user.updateProfile({ displayName: name });
-    }
+  if (name) {
+    await userCredential.user.updateProfile({ displayName: name });
+  }
 
-    await createOrUpdateUserProfile({
-        ...userCredential.user,
-        displayName: name || userCredential.user.displayName
-    }, { branch, rollNumber, phoneNumber });
+  await createOrUpdateUserProfile({
+    ...userCredential.user,
+    displayName: name || userCredential.user.displayName
+  }, { branch, rollNumber, phoneNumber });
 };
 
 const handleLogin = async ({ email, password }) => {
-    const userCredential = await auth.signInWithEmailAndPassword(email, password);
-    await createOrUpdateUserProfile(userCredential.user);
+  const userCredential = await auth.signInWithEmailAndPassword(email, password);
+  await createOrUpdateUserProfile(userCredential.user);
 };
 
 const handleAuthSubmit = async event => {
-    event.preventDefault();
+  event.preventDefault();
 
-    if (!auth) {
-        setAuthMessage("Firebase Authentication is not ready. Check your Firebase config.", "error");
-        return;
+  if (!auth) {
+    setAuthMessage("Firebase Authentication is not ready. Check your Firebase config.", "error");
+    return;
+  }
+
+  const validationResult = validateCredentials({
+    name: authNameInput.value,
+    branch: authBranchInput.value,
+    rollNumber: authRollInput.value,
+    phoneNumber: authPhoneInput.value,
+    email: authEmailInput.value,
+    password: authPasswordInput.value
+  });
+
+  if (!validationResult.valid) {
+    setAuthMessage(validationResult.message, "error");
+    return;
+  }
+
+  authSubmitButton.disabled = true;
+  setAuthMessage(
+    authMode === "signup" ? "Creating your account..." : "Logging you in...",
+    "success"
+  );
+
+  try {
+    if (authMode === "signup") {
+      await handleSignup(validationResult.data);
+    } else {
+      await handleLogin(validationResult.data);
     }
 
-    const validationResult = validateCredentials({
-        name: authNameInput.value,
-        branch: authBranchInput.value,
-        rollNumber: authRollInput.value,
-        phoneNumber: authPhoneInput.value,
-        email: authEmailInput.value,
-        password: authPasswordInput.value
-    });
-
-    if (!validationResult.valid) {
-        setAuthMessage(validationResult.message, "error");
-        return;
-    }
-
-    authSubmitButton.disabled = true;
-    setAuthMessage(
-        authMode === "signup" ? "Creating your account..." : "Logging you in...",
-        "success"
-    );
-
-    try {
-        if (authMode === "signup") {
-            await handleSignup(validationResult.data);
-        } else {
-            await handleLogin(validationResult.data);
-        }
-
-        authForm.reset();
-        setAuthMode("login");
-    } catch (error) {
-        setAuthMessage(getFirebaseErrorMessage(error.code), "error");
-    } finally {
-        authSubmitButton.disabled = false;
-    }
+    authForm.reset();
+    setAuthMode("login");
+  } catch (error) {
+    setAuthMessage(getFirebaseErrorMessage(error.code), "error");
+  } finally {
+    authSubmitButton.disabled = false;
+  }
 };
 
 const handleLogout = async () => {
-    if (!auth || !window.currentUser) {
-        showAuthScreen();
-        return;
-    }
+  if (!auth || !window.currentUser) {
+    showAuthScreen();
+    return;
+  }
 
-    try {
-        await auth.signOut();
-    } catch (error) {
-        setAuthMessage("Logout failed. Please try again.", "error");
-    }
+  try {
+    await auth.signOut();
+  } catch (error) {
+    setAuthMessage("Logout failed. Please try again.", "error");
+  }
 };
 
 authTabs.forEach(tab => {
-    tab.addEventListener("click", () => setAuthMode(tab.dataset.mode));
+  tab.addEventListener("click", () => setAuthMode(tab.dataset.mode));
 });
 
 authForm.addEventListener("submit", handleAuthSubmit);
 logoutButton.addEventListener("click", handleLogout);
 
 if (!auth) {
-    authSubmitButton.disabled = true;
-    showAuthScreen("Firebase Authentication is not ready. Update your Firebase configuration.");
+  authSubmitButton.disabled = true;
+  showAuthScreen("Firebase Authentication is not ready. Update your Firebase configuration.");
 } else {
-    showAuthScreen();
+  showAuthScreen();
 
-    auth.onAuthStateChanged(async user => {
-        window.currentUser = user;
+  auth.onAuthStateChanged(async user => {
+    window.currentUser = user;
 
-        if (user) {
-            setAuthMessage("");
-            try {
-                await createOrUpdateUserProfile(user);
-            } catch (error) {
-                console.error("Unable to sync user profile:", error);
-            }
-            showLoggedInState(user);
-            return;
-        }
+    if (user) {
+      setAuthMessage("");
+      try {
+        await createOrUpdateUserProfile(user);
+      } catch (error) {
+        console.error("[Auth] Unable to sync user profile:", error);
+      }
+      showLoggedInState(user);
+      return;
+    }
 
-        if (typeof window.resetQuizToInitialState === "function") {
-            window.resetQuizToInitialState();
-        }
+    if (typeof window.resetQuizToInitialState === "function") {
+      window.resetQuizToInitialState();
+    }
 
-        authForm.reset();
-        setAuthMode("login");
-        showAuthScreen("Please login to continue.");
-    });
+    authForm.reset();
+    setAuthMode("login");
+    showAuthScreen("Please login to continue.");
+  });
 }
